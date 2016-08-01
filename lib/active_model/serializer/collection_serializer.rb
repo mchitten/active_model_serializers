@@ -44,8 +44,16 @@ module ActiveModel
           explicit_serializer_class._type
         # 2. get from first serializer instance in collection
         key ||= (serializer = serializers.first) && serializer.json_key
-        # 3. get from collection name, if a named collection
-        key ||= object.respond_to?(:name) ? object.name && object.name.underscore : nil
+        if object.respond_to?(:name)
+          begin
+            # 3. use json_key from serializer from collection name
+            key ||= serializer_from_resource(object.name.constantize.new, ActiveModel::Serializer, options).json_key
+          rescue NoSerializerError, NameError
+            # 4. get from collection name, if a named collection
+            key ||= object.name && object.name.underscore
+          end
+        end
+
         # 4. key may be nil for empty collection and no serializer option
         key && key.pluralize
       end

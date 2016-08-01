@@ -1,5 +1,15 @@
 require 'test_helper'
 
+class SerializedResource < ActiveModelSerializers::Model
+  # See test line 94
+end
+
+class SerializedResourceSerializer < ActiveModel::Serializer
+  def json_key
+    'resource'
+  end
+end
+
 module ActiveModel
   class Serializer
     class CollectionSerializerTest < ActiveSupport::TestCase
@@ -20,6 +30,11 @@ module ActiveModel
 
       def build_named_collection(*resource)
         resource.define_singleton_method(:name) { 'MeResource' }
+        resource
+      end
+
+      def build_named_collection_with_matching_serializer(*resource)
+        resource.define_singleton_method(:name) { 'SerializedResource' }
         resource
       end
 
@@ -74,6 +89,11 @@ module ActiveModel
       def test_json_key_with_resource_with_name_and_no_serializers
         serializer = collection_serializer.new(build_named_collection)
         assert_equal 'me_resources', serializer.json_key
+      end
+
+      def test_json_key_with_resource_with_name_and_serializer
+        serializer = collection_serializer.new(build_named_collection_with_matching_serializer)
+        assert_equal 'resources', serializer.json_key
       end
 
       def test_json_key_with_resource_with_nil_name_and_no_serializers
